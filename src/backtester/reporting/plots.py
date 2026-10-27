@@ -36,7 +36,7 @@ def plot_equity_curve(results: pd.DataFrame, path: str | Path, title: str = "Equ
     ax.plot(equity_curve(results["net"]), label="Net of costs")
     ax.set_title(title)
     ax.set_xlabel("Date")
-    ax.set_ylabel("Growth of $1 ($)")
+    ax.set_ylabel(r"Growth of \$1")  # \$ so matplotlib does not read $...$ as math
     ax.legend()
     ax.grid(alpha=0.3)
     return _save(fig, path)
