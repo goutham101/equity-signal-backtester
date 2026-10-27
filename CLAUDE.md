@@ -13,4 +13,4 @@ Update the brain note: phase status, key decisions, findings (real numbers only,
 - Env: `.venv/bin/python` (Python 3.11)
 - Lint: `.venv/bin/ruff check .`
 - Tests: `.venv/bin/pytest` (add `-m "not db"` if Postgres isn't running)
-- DB: `docker compose up -d` (Postgres 16 on localhost:5433)
+- DB: `docker compose up -d` (Postgres 16 on localhost:5434)

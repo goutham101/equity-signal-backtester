@@ -7,7 +7,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG_PATH = ROOT / "config.yaml"
-DEFAULT_DATABASE_URL = "postgresql+psycopg://backtester:backtester@localhost:5433/backtester"
+DEFAULT_DATABASE_URL = "postgresql+psycopg://backtester:backtester@localhost:5434/backtester"
 
 
 def load_config(path: str | Path | None = None) -> dict:

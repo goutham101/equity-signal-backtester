@@ -12,6 +12,8 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# macOS can mark .pth files hidden, which makes Python skip the editable install.
+pythonpath = ["src"]
 markers = [
     "db: needs a running Postgres (skipped when no database is available)",
 ]

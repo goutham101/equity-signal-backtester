@@ -6,9 +6,9 @@ services:
       POSTGRES_USER: backtester
       POSTGRES_PASSWORD: backtester
       POSTGRES_DB: backtester
-    # Host port 5433 so it doesn't clash with a local Postgres on 5432.
+    # Host port 5434: Postgres.app uses 5432 and Video Scene Search uses 5433.
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       # Runs schema.sql the first time the database is created.
