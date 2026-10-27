@@ -1,0 +1,19 @@
+# Streamlit reads this from the folder you run `streamlit run` in (the repo root),
+# and Streamlit Community Cloud reads it from the repo root too.
+# Separate light and dark themes, so the app follows the viewer's system setting.
+[theme]
+baseRadius = "0.75rem"
+
+[theme.light]
+primaryColor = "#4F46E5"
+
+[theme.dark]
+primaryColor = "#818CF8"
+backgroundColor = "#0B1120"
+secondaryBackgroundColor = "#151C2F"
+
+[theme.dark.sidebar]
+backgroundColor = "#0F172A"
+
+[browser]
+gatherUsageStats = false

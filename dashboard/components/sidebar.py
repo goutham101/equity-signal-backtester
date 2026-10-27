@@ -12,7 +12,7 @@ from datetime import datetime
 import streamlit as st
 
 from components import formatting as fmt
-from components import loaders
+from components import loaders, style
 
 APP_TITLE = "Equity Signal Backtester"
 APP_TAGLINE = (
@@ -59,6 +59,7 @@ def _restore(key: str, default) -> None:
 def setup_page(title: str, icon: str) -> Selection:
     """Page config, data check, and sidebar. Call first on every page."""
     st.set_page_config(page_title=f"{title} · {APP_TITLE}", page_icon=icon, layout="wide")
+    style.inject_css()
 
     missing = loaders.missing_files()
     if missing:
@@ -156,7 +157,7 @@ def _links(meta: dict) -> None:
 def render_sidebar(meta: dict) -> Selection:
     """Title, controls, data info, links, and the disclaimer."""
     with st.sidebar:
-        st.markdown(f"### {APP_TITLE}")
+        style.brand(APP_TITLE, "S&P 500 · 2010–2026")
         st.caption(APP_TAGLINE)
         selection = _controls(int(meta.get("default_cost_bps", 10)))
         st.divider()

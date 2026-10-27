@@ -2,11 +2,15 @@
 
 import pandas as pd
 import streamlit as st
-from components import analytics, charts, loaders, sidebar
+from components import analytics, charts, loaders, sidebar, style
 from components import formatting as fmt
 
 selection = sidebar.setup_page("Costs & Turnover", "💸")
-st.title("Costs & Turnover")
+style.hero(
+    "Costs & Turnover",
+    "The same trades at different costs. Watch how fast a high-turnover signal falls apart.",
+    kicker="Where strategies die",
+)
 
 portfolio, rebalance, bps = selection.portfolio, selection.rebalance, selection.cost_bps
 st.caption(
@@ -28,7 +32,7 @@ curve = analytics.cost_curve(frames, range(0, 51))
 charts.show(charts.cost_curve_chart(curve, bps, "Net Sharpe vs trading cost"))
 
 # Breakeven table.
-st.subheader("Breakeven cost")
+style.section("Breakeven cost")
 breakeven = analytics.breakeven_table(frames, bps)
 
 
@@ -74,7 +78,7 @@ charts.show(
 
 # Monthly vs weekly for the sidebar signal.
 signal = selection.signal
-st.subheader(f"Monthly vs weekly: {fmt.signal_label(signal)}")
+style.section(f"Monthly vs weekly: {fmt.signal_label(signal)}")
 if signal == "walk_forward":
     sidebar.walk_forward_notice()
     st.stop()

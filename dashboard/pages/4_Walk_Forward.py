@@ -2,7 +2,7 @@
 
 import pandas as pd
 import streamlit as st
-from components import analytics, charts, loaders, sidebar
+from components import analytics, charts, loaders, sidebar, style
 from components import formatting as fmt
 
 selection = sidebar.setup_page("Walk-Forward", "🧪")
@@ -10,7 +10,11 @@ meta = loaders.metadata()
 bps = selection.cost_bps
 oos = sidebar.oos_years(meta)
 
-st.title("Walk-Forward")
+style.hero(
+    "Walk-Forward",
+    "Fit signal weights on 5 years, test on the next one, repeat. Only test-year results count.",
+    kicker="Out-of-sample",
+)
 st.caption(
     f"Out-of-sample ({oos}), long-short, monthly: the only combination the walk-forward "
     f"combo exists for, so the portfolio and rebalance controls don't apply here. "
@@ -30,7 +34,7 @@ weights = loaders.walk_forward_weights()
 charts.show(charts.weights_chart(weights, "Fitted signal weights per test window"))
 
 # Out-of-sample comparison: table + equity curves at the sidebar cost.
-st.subheader(f"Out-of-sample comparison ({oos}), net of {fmt.fmt_bps(bps)}")
+style.section(f"Out-of-sample comparison ({oos}), net of {fmt.fmt_bps(bps)}")
 order = ["walk_forward", "equal_weight", *fmt.SINGLE_SIGNALS, "random"]
 frames = {}
 for signal in order:

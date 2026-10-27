@@ -64,8 +64,10 @@ def _info_text(app: AppTest) -> str:
 
 def test_overview_loads(app):
     _run_page(app)
-    assert any("out-of-sample" in str(h.value).lower() for h in app.subheader)
+    # The headline section is HTML (style.section), so look in the markdown blocks.
+    assert any("out-of-sample" in str(m.value).lower() for m in app.markdown)
     assert len(app.dataframe) == 1
+    assert len(app.metric) == 4  # KPI cards
 
 
 @pytest.mark.parametrize("page", PAGES)
@@ -198,8 +200,8 @@ def test_fmt_ic_turnover_number():
 def test_signal_labels_and_colors_match_contract():
     assert fmt.signal_label("low_vol") == "Low Vol"
     assert fmt.signal_label("walk_forward") == "Walk-Forward Combo"
-    assert fmt.signal_color("momentum") == "#1f77b4"
-    assert fmt.signal_color("benchmark") == "#bcbd22"
+    assert fmt.signal_color("momentum") == "#6366F1"
+    assert fmt.signal_color("benchmark") == "#0EA5E9"
     assert len(set(fmt.SIGNAL_COLORS.values())) == len(fmt.SIGNAL_COLORS)
     assert [fmt.signal_label(s) for s in fmt.SELECTOR_SIGNALS] == [
         "Momentum",

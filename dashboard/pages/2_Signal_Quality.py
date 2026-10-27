@@ -2,11 +2,16 @@
 
 import pandas as pd
 import streamlit as st
-from components import analytics, charts, loaders, sidebar
+from components import analytics, charts, loaders, sidebar, style
 from components import formatting as fmt
 
 selection = sidebar.setup_page("Signal Quality", "🎯")
-st.title("Signal Quality (IC)")
+style.hero(
+    "Signal Quality",
+    "Does the signal rank tomorrow's winners above the losers? "
+    "Measured before any portfolio or cost.",
+    kicker="Information coefficient",
+)
 st.caption(
     "IC is the rank correlation between today's signal and the forward return that "
     "starts tomorrow (close t+1). It doesn't depend on portfolio type, rebalance, or costs."
@@ -79,7 +84,7 @@ st.caption("Each point is the mean of the last 252 daily ICs, so it only uses pa
 # Per-signal charts for the sidebar signal.
 signal = selection.signal
 label = fmt.signal_label(signal)
-st.subheader(f"{label}: quintiles and IC distribution")
+style.section(f"{label}: quintiles and IC distribution")
 signal_ic = ic[ic["signal"] == signal]["ic"]
 if signal_ic.empty:
     st.info(

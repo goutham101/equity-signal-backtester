@@ -3,15 +3,19 @@
 from datetime import datetime
 
 import streamlit as st
-from components import loaders, sidebar
+from components import loaders, sidebar, style
 
 sidebar.setup_page("Methodology", "📐")
 meta = loaders.metadata()
 
-st.title("Methodology & bias checks")
+style.hero(
+    "Methodology & Bias Checks",
+    "Timing, the look-ahead test, survivorship bias, and everything this project doesn't do.",
+    kicker="How I kept it honest",
+)
 
 # Timing diagram.
-st.subheader("Timing: no peeking at the future")
+style.section("Timing: no peeking at the future")
 lag = meta.get("exec_lag", 1)
 steps = [
     ("Close t", "Compute the signal from prices up to and including today's close."),
@@ -28,7 +32,7 @@ st.caption(
 )
 
 # Look-ahead corruption test.
-st.subheader("Look-ahead test")
+style.section("Look-ahead test")
 test = meta.get("lookahead_test") or {}
 status = test.get("status", "unknown")
 checked = test.get("checked_at")
@@ -55,7 +59,7 @@ st.markdown(
 )
 
 # Survivorship bias.
-st.subheader("Survivorship bias")
+style.section("Survivorship bias")
 st.markdown(
     f"The universe is **{meta.get('universe', 'n/a')}** ({meta.get('n_stocks', 'n/a')} "
     "stocks). Companies that went bust or were dropped from the index are missing, and "
@@ -65,7 +69,7 @@ st.markdown(
 )
 
 # Limitations.
-st.subheader("Limitations")
+style.section("Limitations")
 limitations = meta.get("limitations") or []
 if limitations:
     st.markdown("\n".join(f"- {item}" for item in limitations))
@@ -73,7 +77,7 @@ else:
     st.caption("No limitations exported yet.")
 
 # Variations tried.
-st.subheader("How many things I tried")
+style.section("How many things I tried")
 left, right = st.columns([1, 3])
 left.metric(
     "Variations tried",

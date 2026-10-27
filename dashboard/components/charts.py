@@ -15,12 +15,46 @@ MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]  # fmt: skip
 
 # Colors for walk-forward timeline phases.
-PHASE_COLORS = {"Train": "#1f77b4", "Purge gap": "#bbbbbb", "Test (out-of-sample)": "#d62728"}
+PHASE_COLORS = {
+    "Train": "#6366F1",
+    "Purge gap": "rgba(148, 163, 184, 0.55)",
+    "Test (out-of-sample)": "#F43F5E",
+}
+
+# Neutral color for reference lines (zero, mean, current cost).
+REF_LINE = "#94A3B8"
+GRID = "rgba(148, 163, 184, 0.18)"
+FONT = "Inter, -apple-system, Segoe UI, sans-serif"
+
+
+def polish(fig: go.Figure) -> go.Figure:
+    """Shared fintech styling: Inter font, soft grid, rounded bars, clean hover.
+
+    Backgrounds stay transparent, so the Streamlit theme (light or dark)
+    still decides the page colors.
+    """
+    fig.update_layout(
+        font={"family": FONT, "size": 13},
+        title={"x": 0.01, "xanchor": "left", "font": {"size": 15, "family": FONT}},
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        hoverlabel={"font": {"family": FONT, "size": 12}, "bordercolor": "rgba(0,0,0,0)"},
+        barcornerradius=6,
+        legend={"font": {"size": 12}, "bgcolor": "rgba(0,0,0,0)"},
+    )
+    # Room at the bottom so x-axis titles aren't clipped by the card.
+    margin = fig.layout.margin
+    fig.update_layout(margin={"b": max(margin.b or 0, 64)})
+    fig.update_xaxes(showgrid=False, linecolor=GRID, zeroline=False)
+    fig.update_yaxes(gridcolor=GRID, zeroline=False, linecolor=GRID)
+    return fig
 
 
 def show(fig: go.Figure) -> None:
-    """Render a figure with the Streamlit theme (works in light and dark mode)."""
-    st.plotly_chart(fig, theme="streamlit", width="stretch")
+    """Render a polished figure with the Streamlit theme (light and dark mode)."""
+    st.plotly_chart(
+        polish(fig), theme="streamlit", width="stretch", config={"displayModeBar": False}
+    )
 
 
 def _layout(fig: go.Figure, title: str, y_title: str, y_format: str | None = None) -> go.Figure:
@@ -50,7 +84,7 @@ def line_chart(
                 y=data.values,
                 name=line["name"],
                 mode="lines",
-                line={"color": line["color"], "dash": line.get("dash", "solid"), "width": 2},
+                line={"color": line["color"], "dash": line.get("dash", "solid"), "width": 2.2},
             )
         )
     return _layout(fig, title, y_title, y_format)
@@ -71,16 +105,25 @@ def drawdown_chart(drawdown: pd.Series, title: str, color: str) -> go.Figure:
             y=drawdown.values,
             mode="lines",
             fill="tozeroy",
+            fillcolor=_with_alpha(color, 0.18),
             name="Drawdown",
-            line={"color": color, "width": 1},
+            line={"color": color, "width": 1.5},
         )
     )
     return _layout(fig, title, "Drawdown", ".0%")
 
 
+def _with_alpha(hex_color: str, alpha: float) -> str:
+    """'#RRGGBB' -> 'rgba(r, g, b, alpha)'. Other color strings are returned unchanged."""
+    if not (hex_color.startswith("#") and len(hex_color) == 7):
+        return hex_color
+    r, g, b = (int(hex_color[i : i + 2], 16) for i in (1, 3, 5))
+    return f"rgba({r}, {g}, {b}, {alpha})"
+
+
 def with_zero_line(fig: go.Figure) -> go.Figure:
     """Add a dashed horizontal line at zero."""
-    fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.7)
+    fig.add_hline(y=0, line_dash="dash", line_color=REF_LINE, opacity=0.7)
     return fig
 
 
@@ -141,12 +184,12 @@ def histogram(values: pd.Series, mean: float, title: str, color: str) -> go.Figu
     fig.add_vline(
         x=mean,
         line_dash="dash",
-        line_color="gray",
+        line_color=REF_LINE,
         line_width=2,
         annotation_text=f"mean {mean:.4f}",
         annotation_position="top right",
     )
-    fig.add_vline(x=0, line_color="gray", line_dash="dot", opacity=0.4)
+    fig.add_vline(x=0, line_color=REF_LINE, line_dash="dot", opacity=0.4)
     fig.update_layout(
         title=title,
         xaxis_title="Daily IC",
@@ -170,7 +213,10 @@ def cost_curve_chart(curve: pd.DataFrame, current_bps: float, title: str) -> go.
     fig = line_chart(lines, title, "Net Sharpe")
     fig.update_xaxes(title="Cost per unit traded (bps)")
     fig.add_vline(
-        x=current_bps, line_dash="dot", line_color="gray", annotation_text=fmt.fmt_bps(current_bps)
+        x=current_bps,
+        line_dash="dot",
+        line_color=REF_LINE,
+        annotation_text=fmt.fmt_bps(current_bps),
     )
     return with_zero_line(fig)
 

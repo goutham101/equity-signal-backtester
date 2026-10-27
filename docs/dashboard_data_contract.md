@@ -15,13 +15,13 @@ Rules:
 
 | key | label | color |
 |---|---|---|
-| `momentum` | Momentum | `#1f77b4` |
-| `reversal` | Reversal | `#ff7f0e` |
-| `low_vol` | Low Vol | `#2ca02c` |
-| `equal_weight` | Equal-Weight Combo | `#9467bd` |
-| `walk_forward` | Walk-Forward Combo | `#d62728` |
-| `random` | Random Baseline | `#7f7f7f` |
-| `benchmark` | Equal-Weight Benchmark (all stocks) | `#bcbd22` |
+| `momentum` | Momentum | `#6366F1` |
+| `reversal` | Reversal | `#F59E0B` |
+| `low_vol` | Low Vol | `#10B981` |
+| `equal_weight` | Equal-Weight Combo | `#A855F7` |
+| `walk_forward` | Walk-Forward Combo | `#F43F5E` |
+| `random` | Random Baseline | `#94A3B8` |
+| `benchmark` | Equal-Weight Benchmark (all stocks) | `#0EA5E9` |
 
 `benchmark` only shows up as the comparison for long-only.
 

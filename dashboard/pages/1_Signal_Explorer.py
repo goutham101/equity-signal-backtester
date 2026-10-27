@@ -1,12 +1,17 @@
 """Signal Explorer: one strategy in detail, driven by the sidebar controls."""
 
 import streamlit as st
-from components import analytics, charts, loaders, sidebar
+from components import analytics, charts, loaders, sidebar, style
 from components import formatting as fmt
 from components.analytics import metrics  # imported via components so src/ is on sys.path
 
 selection = sidebar.setup_page("Signal Explorer", "🔍")
-st.title("Signal Explorer")
+style.hero(
+    "Signal Explorer",
+    "Equity, drawdowns, rolling Sharpe and monthly returns for any signal. "
+    "Every number reacts to the sidebar.",
+    kicker="Explore",
+)
 
 if selection.walk_forward_unavailable:
     sidebar.walk_forward_notice()
@@ -63,7 +68,9 @@ CARDS = [
     ("hit_rate", "Hit rate", fmt.fmt_pct, "Share of days with a positive return."),
 ]
 values = analytics.gross_net_metrics(frame, bps)
-for column, (key, label, formatter, tip) in zip(st.columns(len(CARDS)), CARDS, strict=True):
+# Two rows of three cards, so the numbers have room.
+columns = st.columns(3) + st.columns(3)
+for column, (key, label, formatter, tip) in zip(columns, CARDS, strict=True):
     gross, net = values[key]
     column.metric(
         label if key == "turnover" else f"{label} (net)",
@@ -135,7 +142,7 @@ with right:
 charts.show(charts.monthly_heatmap(analytics.monthly_grid(net), f"{oos_tag}Monthly net returns"))
 
 # Long vs short legs (long-short only).
-st.subheader("Which side made the money?")
+style.section("Which side made the money?")
 if selection.portfolio != "long_short":
     st.caption("The leg breakdown only applies to long-short portfolios.")
 else:

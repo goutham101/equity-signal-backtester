@@ -14,13 +14,13 @@ SIGNAL_LABELS = {
 }
 
 SIGNAL_COLORS = {
-    "momentum": "#1f77b4",
-    "reversal": "#ff7f0e",
-    "low_vol": "#2ca02c",
-    "equal_weight": "#9467bd",
-    "walk_forward": "#d62728",
-    "random": "#7f7f7f",
-    "benchmark": "#bcbd22",
+    "momentum": "#6366F1",
+    "reversal": "#F59E0B",
+    "low_vol": "#10B981",
+    "equal_weight": "#A855F7",
+    "walk_forward": "#F43F5E",
+    "random": "#94A3B8",
+    "benchmark": "#0EA5E9",
 }
 
 # Order of the sidebar signal selector (spec).
