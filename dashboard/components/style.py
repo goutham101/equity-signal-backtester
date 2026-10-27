@@ -1,126 +1,149 @@
-"""Look and feel: global CSS, the page hero banner, and section headings.
+"""Look and feel: design tokens, global CSS, page header, and section headings.
 
-Colors are mostly semi-transparent (rgba) so the same CSS reads well on
-Streamlit's light and dark themes. Only the hero banner has a fixed
-background, and its text is always white on it.
+Design system: design-system/equity-signal-backtester/MASTER.md, generated with
+the ui-ux-pro-max skill ("Data-Dense Dashboard": navy and slate surfaces,
+amber highlights, Fira Sans for text and Fira Code for numbers).
+
+Colors are CSS variables with a light set and a dark set. The dark set kicks
+in through prefers-color-scheme, which matches Streamlit because the app
+follows the system theme (.streamlit/config.toml defines both). Every
+text/background pair is at least 4.5:1, and data colors at least 3:1.
 """
 
 import html
 
 import streamlit as st
 
-ACCENT = "#4F46E5"  # indigo-600
-
 _CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-/* Set the font on containers and let it inherit. Targeting every element would
-   also override the icon font, which turns icons into their names as text. */
-html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"],
-button, input, select, textarea {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+:root {
+    --ebt-surface: #FFFFFF;
+    --ebt-surface-2: #F1F5F9;
+    --ebt-border: #E2E8F0;
+    --ebt-border-strong: #CBD5E1;
+    --ebt-text: #0F172A;
+    --ebt-muted: #64748B;
+    --ebt-primary: #1E40AF;
+    --ebt-primary-soft: rgba(30, 64, 175, 0.08);
+    --ebt-accent: #B45309;
+    --ebt-accent-soft: rgba(217, 119, 6, 0.12);
+    --ebt-up: #047857;
+    --ebt-down: #B91C1C;
+    --ebt-mono: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --ebt-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
 }
-.block-container { padding-top: 2.2rem; padding-bottom: 4rem; max-width: 1280px; }
+@media (prefers-color-scheme: dark) {
+    :root {
+        --ebt-surface: #1E293B;
+        --ebt-surface-2: #172033;
+        --ebt-border: #334155;
+        --ebt-border-strong: #475569;
+        --ebt-text: #E2E8F0;
+        --ebt-muted: #94A3B8;
+        --ebt-primary: #60A5FA;
+        --ebt-primary-soft: rgba(96, 165, 250, 0.12);
+        --ebt-accent: #F59E0B;
+        --ebt-accent-soft: rgba(245, 158, 11, 0.14);
+        --ebt-up: #34D399;
+        --ebt-down: #F87171;
+        --ebt-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    }
+}
+
+/* Dense layout: 8px rhythm, wide but bounded content. */
+.block-container { padding-top: 1.6rem; padding-bottom: 3rem; max-width: 1360px; }
 [data-testid="stHeader"] { background: transparent; }
+[data-testid="stVerticalBlock"] { gap: 0.75rem; }
 
-/* Headings */
-h1, h2, h3 { letter-spacing: -0.02em; font-weight: 700 !important; }
-h3 { font-size: 1.15rem !important; margin-top: 1.6rem !important; }
+/* Page header: eyebrow, title, one-line summary, status pills. No gradient. */
+.ebt-header {
+    border-bottom: 1px solid var(--ebt-border);
+    padding: 4px 0 16px 0; margin: 0 0 8px 0;
+}
+.ebt-eyebrow {
+    font-family: var(--ebt-mono); font-size: 0.72rem; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--ebt-accent);
+    margin-bottom: 6px;
+}
+.ebt-header h1 {
+    font-size: 1.75rem !important; font-weight: 600 !important; letter-spacing: -0.01em;
+    margin: 0 0 4px 0 !important; padding: 0 !important; line-height: 1.2;
+}
+.ebt-header p { color: var(--ebt-muted); font-size: 0.95rem; margin: 0; max-width: 820px;
+    line-height: 1.5; }
+.ebt-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.ebt-pill {
+    display: inline-flex; align-items: baseline; gap: 6px;
+    background: var(--ebt-surface); border: 1px solid var(--ebt-border);
+    border-radius: 6px; padding: 4px 10px; font-size: 0.78rem;
+}
+.ebt-pill .k { color: var(--ebt-muted); text-transform: uppercase; letter-spacing: 0.06em;
+    font-size: 0.68rem; font-weight: 600; }
+.ebt-pill .v { font-family: var(--ebt-mono); font-weight: 500;
+    font-variant-numeric: tabular-nums; }
 
-/* Hero banner */
-.ebt-hero {
-    position: relative; overflow: hidden;
-    background: linear-gradient(120deg, #4338CA 0%, #6366F1 45%, #8B5CF6 75%, #EC4899 120%);
-    border-radius: 22px; padding: 30px 34px 28px; margin: 0 0 26px 0; color: #fff;
-    box-shadow: 0 18px 40px -18px rgba(79, 70, 229, 0.55);
-}
-.ebt-hero::after {
-    content: ""; position: absolute; right: -60px; top: -80px; width: 320px; height: 320px;
-    background: radial-gradient(circle, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 65%);
-}
-.ebt-kicker {
-    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem; font-weight: 600;
-    opacity: 0.85; margin-bottom: 6px;
-}
-.ebt-hero h1 {
-    color: #fff !important; font-size: 2.1rem !important; font-weight: 800 !important;
-    margin: 0 0 6px 0 !important; padding: 0 !important; line-height: 1.15;
-}
-.ebt-hero p { color: rgba(255,255,255,0.9); font-size: 1.02rem; margin: 0; max-width: 760px; }
-.ebt-chips { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; }
-.ebt-chip {
-    background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.28);
-    border-radius: 999px; padding: 4px 12px; font-size: 0.8rem; font-weight: 500;
-    backdrop-filter: blur(6px);
+/* Section heading: small square marker, title, optional amber badge. */
+.ebt-section { margin: 22px 0 2px 0; display: flex; align-items: center; gap: 8px; }
+.ebt-section .mark { width: 8px; height: 8px; border-radius: 2px; background: var(--ebt-primary); }
+.ebt-section .title { font-size: 1rem; font-weight: 600; }
+.ebt-section-caption { color: var(--ebt-muted); font-size: 0.85rem; margin: 2px 0 6px 16px;
+    line-height: 1.5; }
+.ebt-badge {
+    font-family: var(--ebt-mono); font-size: 0.7rem; font-weight: 500;
+    color: var(--ebt-accent); background: var(--ebt-accent-soft);
+    border: 1px solid var(--ebt-accent-soft); border-radius: 4px; padding: 1px 7px;
 }
 
-/* Section heading with a short accent bar */
-.ebt-section { margin: 30px 0 4px 0; display: flex; align-items: center; gap: 10px; }
-.ebt-section span.bar { width: 4px; height: 20px; border-radius: 4px; background: #6366F1; }
-.ebt-section span.title { font-size: 1.12rem; font-weight: 700; letter-spacing: -0.01em; }
-.ebt-section-caption { opacity: 0.65; font-size: 0.88rem; margin: 2px 0 12px 14px; }
-
-/* Metric tiles as cards */
+/* KPI tiles: compact, bordered, numbers in Fira Code with tabular figures. */
 [data-testid="stMetric"] {
-    background: rgba(127, 127, 127, 0.04);
-    border: 1px solid rgba(127, 127, 127, 0.16);
-    border-radius: 16px; padding: 16px 18px 14px;
-    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px -12px rgba(16, 24, 40, 0.12);
-    transition: transform .15s ease, box-shadow .15s ease;
-}
-[data-testid="stMetric"]:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 4px rgba(16, 24, 40, 0.06), 0 14px 30px -12px rgba(79, 70, 229, 0.28);
+    background: var(--ebt-surface); border: 1px solid var(--ebt-border);
+    border-radius: 8px; padding: 12px 14px; box-shadow: var(--ebt-shadow);
 }
 [data-testid="stMetricLabel"] p {
-    font-size: 0.78rem !important; font-weight: 600 !important; text-transform: uppercase;
-    letter-spacing: 0.06em; opacity: 0.7;
+    font-size: 0.7rem !important; font-weight: 600 !important; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--ebt-muted);
 }
-[data-testid="stMetricValue"] { font-size: clamp(1.4rem, 2vw, 1.9rem) !important;
-    font-weight: 750 !important;
-    letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-[data-testid="stMetricDelta"] { font-size: 0.78rem !important; font-weight: 500; }
+[data-testid="stMetricValue"] {
+    font-family: var(--ebt-mono); font-size: clamp(1.25rem, 1.8vw, 1.6rem) !important;
+    font-weight: 600 !important; font-variant-numeric: tabular-nums; letter-spacing: -0.01em;
+}
+[data-testid="stMetricDelta"] { font-family: var(--ebt-mono); font-size: 0.75rem !important; }
 
-[data-testid="stHorizontalBlock"] { margin-bottom: 4px; }
-
-/* Charts and tables in cards */
+/* Charts and tables: flat bordered panels. */
 [data-testid="stPlotlyChart"] {
-    background: rgba(127, 127, 127, 0.03);
-    border: 1px solid rgba(127, 127, 127, 0.14);
-    border-radius: 18px; padding: 10px 12px; box-sizing: border-box;
-    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 10px 28px -16px rgba(16, 24, 40, 0.14);
+    background: var(--ebt-surface); border: 1px solid var(--ebt-border);
+    border-radius: 8px; padding: 8px 10px; box-sizing: border-box; box-shadow: var(--ebt-shadow);
 }
-/* No padding on tables: the grid is sized to the full width and would overflow. */
 [data-testid="stDataFrame"] {
-    border-radius: 14px; overflow: hidden;
-    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 10px 28px -16px rgba(16, 24, 40, 0.14);
+    border: 1px solid var(--ebt-border); border-radius: 8px; overflow: hidden;
 }
+[data-testid="stAlert"] { border-radius: 8px; }
 
-/* Bordered containers (info boxes etc.) */
-[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 18px !important; }
-[data-testid="stAlert"] { border-radius: 14px; }
+/* Hover states only for motion-tolerant users (150 ms, colour only, no layout shift). */
+@media (prefers-reduced-motion: no-preference) {
+    [data-testid="stMetric"], [data-testid="stPlotlyChart"] {
+        transition: border-color 150ms ease-out;
+    }
+}
+[data-testid="stMetric"]:hover, [data-testid="stPlotlyChart"]:hover {
+    border-color: var(--ebt-border-strong);
+}
 
 /* Sidebar */
-[data-testid="stSidebar"] { border-right: 1px solid rgba(127, 127, 127, 0.14); }
-[data-testid="stSidebarNav"] a { border-radius: 10px; font-weight: 500; }
+[data-testid="stSidebar"] { border-right: 1px solid var(--ebt-border); }
+[data-testid="stSidebarNav"] a { border-radius: 6px; font-weight: 500; }
 .ebt-brand { display: flex; align-items: center; gap: 10px; margin: 2px 0 6px 0; }
 .ebt-logo {
-    width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
-    background: linear-gradient(135deg, #4F46E5, #8B5CF6 60%, #EC4899);
+    width: 32px; height: 32px; border-radius: 6px; flex-shrink: 0;
+    background: var(--ebt-primary); color: #FFFFFF;
     display: flex; align-items: center; justify-content: center;
-    color: #fff; font-weight: 800; font-size: 0.95rem;
-    box-shadow: 0 6px 16px -6px rgba(99, 102, 241, 0.7);
+    font-family: var(--ebt-mono); font-weight: 600; font-size: 0.8rem;
 }
-.ebt-brand-name { font-weight: 700; font-size: 1rem; line-height: 1.15; }
-.ebt-brand-sub { font-size: 0.75rem; opacity: 0.6; }
+.ebt-brand-name { font-weight: 600; font-size: 0.98rem; line-height: 1.15; }
+.ebt-brand-sub { font-family: var(--ebt-mono); font-size: 0.7rem; color: var(--ebt-muted); }
 
-/* Small badge, e.g. "Out-of-sample" */
-.ebt-badge {
-    display: inline-block; background: rgba(99, 102, 241, 0.12); color: #6366F1;
-    border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 999px;
-    padding: 2px 10px; font-size: 0.75rem; font-weight: 600; margin-left: 6px;
-}
+/* Inline code reads as data. */
+code { font-family: var(--ebt-mono) !important; }
 </style>
 """
 
@@ -130,26 +153,39 @@ def inject_css() -> None:
     st.markdown(_CSS, unsafe_allow_html=True)
 
 
-def hero(title: str, subtitle: str = "", kicker: str = "", chips: list[str] | None = None) -> None:
-    """Gradient banner at the top of a page. All text is escaped."""
-    chip_html = "".join(f'<span class="ebt-chip">{html.escape(c)}</span>' for c in chips or [])
-    parts = ['<div class="ebt-hero">']
-    if kicker:
-        parts.append(f'<div class="ebt-kicker">{html.escape(kicker)}</div>')
+def page_header(
+    title: str,
+    subtitle: str = "",
+    eyebrow: str = "",
+    pills: list[tuple[str, str]] | None = None,
+) -> None:
+    """Compact page header: eyebrow, title, summary, and key/value status pills.
+
+    pills: list of (label, value), e.g. [("Universe", "498 stocks")].
+    All text is escaped.
+    """
+    parts = ['<div class="ebt-header">']
+    if eyebrow:
+        parts.append(f'<div class="ebt-eyebrow">{html.escape(eyebrow)}</div>')
     parts.append(f"<h1>{html.escape(title)}</h1>")
     if subtitle:
         parts.append(f"<p>{html.escape(subtitle)}</p>")
-    if chip_html:
-        parts.append(f'<div class="ebt-chips">{chip_html}</div>')
+    if pills:
+        items = "".join(
+            f'<span class="ebt-pill"><span class="k">{html.escape(k)}</span>'
+            f'<span class="v">{html.escape(v)}</span></span>'
+            for k, v in pills
+        )
+        parts.append(f'<div class="ebt-pills">{items}</div>')
     parts.append("</div>")
     st.markdown("".join(parts), unsafe_allow_html=True)
 
 
 def section(title: str, caption: str = "", badge: str = "") -> None:
-    """Section heading with an accent bar, optional badge and caption."""
+    """Section heading with a small marker, optional amber badge and caption."""
     badge_html = f'<span class="ebt-badge">{html.escape(badge)}</span>' if badge else ""
     st.markdown(
-        f'<div class="ebt-section"><span class="bar"></span>'
+        f'<div class="ebt-section"><span class="mark"></span>'
         f'<span class="title">{html.escape(title)}</span>{badge_html}</div>',
         unsafe_allow_html=True,
     )
@@ -161,9 +197,9 @@ def section(title: str, caption: str = "", badge: str = "") -> None:
 
 
 def brand(name: str, tagline: str) -> None:
-    """Logo square plus app name, for the top of the sidebar."""
+    """Monogram plus app name, for the top of the sidebar."""
     st.markdown(
-        f'<div class="ebt-brand"><div class="ebt-logo">ES</div><div>'
+        f'<div class="ebt-brand"><div class="ebt-logo">ESB</div><div>'
         f'<div class="ebt-brand-name">{html.escape(name)}</div>'
         f'<div class="ebt-brand-sub">{html.escape(tagline)}</div></div></div>',
         unsafe_allow_html=True,

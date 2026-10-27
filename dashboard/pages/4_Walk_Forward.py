@@ -5,15 +5,15 @@ import streamlit as st
 from components import analytics, charts, loaders, sidebar, style
 from components import formatting as fmt
 
-selection = sidebar.setup_page("Walk-Forward", "🧪")
+selection = sidebar.setup_page("Walk-Forward", ":material/timeline:")
 meta = loaders.metadata()
 bps = selection.cost_bps
 oos = sidebar.oos_years(meta)
 
-style.hero(
+style.page_header(
     "Walk-Forward",
     "Fit signal weights on 5 years, test on the next one, repeat. Only test-year results count.",
-    kicker="Out-of-sample",
+    eyebrow="Out-of-sample",
 )
 st.caption(
     f"Out-of-sample ({oos}), long-short, monthly: the only combination the walk-forward "

@@ -1,19 +1,38 @@
 # Streamlit reads this from the folder you run `streamlit run` in (the repo root),
 # and Streamlit Community Cloud reads it from the repo root too.
-# Separate light and dark themes, so the app follows the viewer's system setting.
+#
+# Design system: design-system/equity-signal-backtester/MASTER.md
+# (ui-ux-pro-max "Data-Dense Dashboard": navy + slate, amber highlights,
+# Fira Sans for text, Fira Code for numbers). Light and dark are designed as a
+# pair, and the app follows the viewer's system setting.
 [theme]
-baseRadius = "0.75rem"
+baseRadius = "0.5rem"
+font = "Fira Sans:https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&display=swap, sans-serif"
+headingFont = "Fira Sans:https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&display=swap, sans-serif"
+codeFont = "Fira Code:https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap, monospace"
+baseFontSize = 15
 
 [theme.light]
-primaryColor = "#4F46E5"
+primaryColor = "#1E40AF"
+backgroundColor = "#F8FAFC"
+secondaryBackgroundColor = "#EEF2F7"
+textColor = "#0F172A"
+borderColor = "#E2E8F0"
+dataframeHeaderBackgroundColor = "#F1F5F9"
+
+[theme.light.sidebar]
+backgroundColor = "#FFFFFF"
 
 [theme.dark]
-primaryColor = "#818CF8"
-backgroundColor = "#0B1120"
-secondaryBackgroundColor = "#151C2F"
+primaryColor = "#3B82F6"
+backgroundColor = "#0F172A"
+secondaryBackgroundColor = "#1E293B"
+textColor = "#E2E8F0"
+borderColor = "#334155"
+dataframeHeaderBackgroundColor = "#1E293B"
 
 [theme.dark.sidebar]
-backgroundColor = "#0F172A"
+backgroundColor = "#0B1222"
 
 [browser]
 gatherUsageStats = false

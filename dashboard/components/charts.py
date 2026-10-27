@@ -15,16 +15,18 @@ MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]  # fmt: skip
 
 # Colors for walk-forward timeline phases.
+# Train in the primary blue, test in the amber highlight (out-of-sample).
 PHASE_COLORS = {
-    "Train": "#6366F1",
-    "Purge gap": "rgba(148, 163, 184, 0.55)",
-    "Test (out-of-sample)": "#F43F5E",
+    "Train": "#3B82F6",
+    "Purge gap": "rgba(124, 139, 161, 0.55)",
+    "Test (out-of-sample)": "#D97706",
 }
 
 # Neutral color for reference lines (zero, mean, current cost).
-REF_LINE = "#94A3B8"
+REF_LINE = "#7C8BA1"
 GRID = "rgba(148, 163, 184, 0.18)"
-FONT = "Inter, -apple-system, Segoe UI, sans-serif"
+FONT = "Fira Sans, -apple-system, Segoe UI, sans-serif"
+MONO = "Fira Code, ui-monospace, Menlo, monospace"
 
 
 def polish(fig: go.Figure) -> go.Figure:
@@ -38,15 +40,20 @@ def polish(fig: go.Figure) -> go.Figure:
         title={"x": 0.01, "xanchor": "left", "font": {"size": 15, "family": FONT}},
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        hoverlabel={"font": {"family": FONT, "size": 12}, "bordercolor": "rgba(0,0,0,0)"},
-        barcornerradius=6,
+        hoverlabel={"font": {"family": MONO, "size": 12}, "bordercolor": "rgba(0,0,0,0)"},
+        barcornerradius=3,
         legend={"font": {"size": 12}, "bgcolor": "rgba(0,0,0,0)"},
     )
     # Room at the bottom so x-axis titles aren't clipped by the card.
     margin = fig.layout.margin
     fig.update_layout(margin={"b": max(margin.b or 0, 64)})
-    fig.update_xaxes(showgrid=False, linecolor=GRID, zeroline=False)
-    fig.update_yaxes(gridcolor=GRID, zeroline=False, linecolor=GRID)
+    # Numbers on the axes in Fira Code, like every other number in the app.
+    fig.update_xaxes(
+        showgrid=False, linecolor=GRID, zeroline=False, tickfont={"family": MONO, "size": 11}
+    )
+    fig.update_yaxes(
+        gridcolor=GRID, zeroline=False, linecolor=GRID, tickfont={"family": MONO, "size": 11}
+    )
     return fig
 
 
@@ -76,15 +83,18 @@ def line_chart(
 ) -> go.Figure:
     """Line chart from a list of {"series", "name", "color", optional "dash"} dicts."""
     fig = go.Figure()
+    # With several series, also vary the line style so color isn't the only cue.
+    many = len(lines) > 2
     for line in lines:
         data = line["series"].dropna()
+        dash = line.get("dash") or (fmt.signal_dash_for_label(line["name"]) if many else "solid")
         fig.add_trace(
             go.Scatter(
                 x=data.index,
                 y=data.values,
                 name=line["name"],
                 mode="lines",
-                line={"color": line["color"], "dash": line.get("dash", "solid"), "width": 2.2},
+                line={"color": line["color"], "dash": dash, "width": 2},
             )
         )
     return _layout(fig, title, y_title, y_format)
@@ -105,7 +115,7 @@ def drawdown_chart(drawdown: pd.Series, title: str, color: str) -> go.Figure:
             y=drawdown.values,
             mode="lines",
             fill="tozeroy",
-            fillcolor=_with_alpha(color, 0.18),
+            fillcolor=_with_alpha(color, 0.2),
             name="Drawdown",
             line={"color": color, "width": 1.5},
         )

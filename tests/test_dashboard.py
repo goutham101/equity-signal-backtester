@@ -200,8 +200,8 @@ def test_fmt_ic_turnover_number():
 def test_signal_labels_and_colors_match_contract():
     assert fmt.signal_label("low_vol") == "Low Vol"
     assert fmt.signal_label("walk_forward") == "Walk-Forward Combo"
-    assert fmt.signal_color("momentum") == "#6366F1"
-    assert fmt.signal_color("benchmark") == "#0EA5E9"
+    assert fmt.signal_color("momentum") == "#3B82F6"
+    assert fmt.signal_color("benchmark") == "#0891B2"
     assert len(set(fmt.SIGNAL_COLORS.values())) == len(fmt.SIGNAL_COLORS)
     assert [fmt.signal_label(s) for s in fmt.SELECTOR_SIGNALS] == [
         "Momentum",

@@ -14,13 +14,25 @@ SIGNAL_LABELS = {
 }
 
 SIGNAL_COLORS = {
-    "momentum": "#6366F1",
-    "reversal": "#F59E0B",
-    "low_vol": "#10B981",
-    "equal_weight": "#A855F7",
-    "walk_forward": "#F43F5E",
-    "random": "#94A3B8",
-    "benchmark": "#0EA5E9",
+    "momentum": "#3B82F6",
+    "reversal": "#D97706",
+    "low_vol": "#059669",
+    "equal_weight": "#8B5CF6",
+    "walk_forward": "#DB2777",
+    "random": "#7C8BA1",
+    "benchmark": "#0891B2",
+}
+
+# Line style per signal, so series differ by more than colour (colour-blind
+# readers). Chosen to stay distinct when several signals share one chart.
+SIGNAL_DASHES = {
+    "momentum": "solid",
+    "reversal": "dash",
+    "low_vol": "dot",
+    "equal_weight": "dashdot",
+    "walk_forward": "solid",
+    "random": "longdash",
+    "benchmark": "longdashdot",
 }
 
 # Order of the sidebar signal selector (spec).
@@ -51,6 +63,14 @@ def signal_label(key: str) -> str:
 def signal_color(key: str) -> str:
     """Fixed chart color for a signal key (gray if unknown)."""
     return SIGNAL_COLORS.get(key, "#7f7f7f")
+
+
+def signal_dash_for_label(label: str) -> str:
+    """Line style for a series, looked up by its display label ("solid" if unknown)."""
+    for key, name in SIGNAL_LABELS.items():
+        if name == label:
+            return SIGNAL_DASHES.get(key, "solid")
+    return "solid"
 
 
 def _missing(value) -> bool:

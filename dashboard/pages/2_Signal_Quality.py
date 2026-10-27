@@ -5,12 +5,12 @@ import streamlit as st
 from components import analytics, charts, loaders, sidebar, style
 from components import formatting as fmt
 
-selection = sidebar.setup_page("Signal Quality", "🎯")
-style.hero(
+selection = sidebar.setup_page("Signal Quality", ":material/insights:")
+style.page_header(
     "Signal Quality",
     "Does the signal rank tomorrow's winners above the losers? "
     "Measured before any portfolio or cost.",
-    kicker="Information coefficient",
+    eyebrow="Information coefficient",
 )
 st.caption(
     "IC is the rank correlation between today's signal and the forward return that "

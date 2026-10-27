@@ -5,13 +5,13 @@ from datetime import datetime
 import streamlit as st
 from components import loaders, sidebar, style
 
-sidebar.setup_page("Methodology", "📐")
+sidebar.setup_page("Methodology", ":material/science:")
 meta = loaders.metadata()
 
-style.hero(
+style.page_header(
     "Methodology & Bias Checks",
     "Timing, the look-ahead test, survivorship bias, and everything this project doesn't do.",
-    kicker="How I kept it honest",
+    eyebrow="How I kept it honest",
 )
 
 # Timing diagram.

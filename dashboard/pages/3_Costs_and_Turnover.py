@@ -5,11 +5,11 @@ import streamlit as st
 from components import analytics, charts, loaders, sidebar, style
 from components import formatting as fmt
 
-selection = sidebar.setup_page("Costs & Turnover", "💸")
-style.hero(
+selection = sidebar.setup_page("Costs & Turnover", ":material/payments:")
+style.page_header(
     "Costs & Turnover",
     "The same trades at different costs. Watch how fast a high-turnover signal falls apart.",
-    kicker="Where strategies die",
+    eyebrow="Where strategies die",
 )
 
 portfolio, rebalance, bps = selection.portfolio, selection.rebalance, selection.cost_bps

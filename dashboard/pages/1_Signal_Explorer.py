@@ -5,12 +5,12 @@ from components import analytics, charts, loaders, sidebar, style
 from components import formatting as fmt
 from components.analytics import metrics  # imported via components so src/ is on sys.path
 
-selection = sidebar.setup_page("Signal Explorer", "🔍")
-style.hero(
+selection = sidebar.setup_page("Signal Explorer", ":material/query_stats:")
+style.page_header(
     "Signal Explorer",
     "Equity, drawdowns, rolling Sharpe and monthly returns for any signal. "
     "Every number reacts to the sidebar.",
-    kicker="Explore",
+    eyebrow="Explore",
 )
 
 if selection.walk_forward_unavailable:

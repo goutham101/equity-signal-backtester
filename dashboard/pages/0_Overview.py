@@ -8,22 +8,22 @@ import streamlit as st
 from components import analytics, charts, loaders, sidebar, style
 from components import formatting as fmt
 
-sidebar.setup_page("Overview", "📈")
+sidebar.setup_page("Overview", ":material/space_dashboard:")
 meta = loaders.metadata()
 headline_bps = int(meta.get("default_cost_bps", 10))
 oos = sidebar.oos_years(meta)
 
-style.hero(
+style.page_header(
     "Equity Signal Backtester",
     "If I had traded on a signal in the past, using only what I could have known "
     "at the time, would it have made money after trading costs?",
-    kicker="Quant research · S&P 500",
-    chips=[
-        f"{meta.get('n_stocks', 'n/a')} stocks",
-        f"{str(meta.get('start_date', ''))[:4]}–{str(meta.get('end_date', ''))[:4]}",
-        f"Out-of-sample {oos}",
-        f"{fmt.fmt_bps(headline_bps)} costs",
-        f"{meta.get('variations_tried', 'n/a')} runs logged",
+    eyebrow="Quant research · S&P 500",
+    pills=[
+        ("Universe", f"{meta.get('n_stocks', 'n/a')} stocks"),
+        ("Period", f"{str(meta.get('start_date', ''))[:4]}–{str(meta.get('end_date', ''))[:4]}"),
+        ("Out-of-sample", oos),
+        ("Cost", fmt.fmt_bps(headline_bps)),
+        ("Runs logged", str(meta.get("variations_tried", "n/a"))),
     ],
 )
 
