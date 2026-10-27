@@ -1,0 +1,30 @@
+data:
+  start_date: "2010-01-01"
+  end_date: null            # null = latest available
+  universe: "sp500_current"
+  min_history_days: 504
+  max_ffill_days: 5
+
+signals:
+  momentum: {lookback: 252, skip: 21}
+  reversal: {lookback: 5}
+  low_vol: {window: 60}
+  min_stocks: 50
+
+backtest:
+  exec_lag: 1
+  rebalance: "monthly"      # monthly | weekly
+  quantiles: 5
+  cost_bps: 10
+  cost_sensitivity: [0, 5, 10, 20, 50]
+
+analysis:
+  ic_horizons: [5, 21, 63]
+
+walk_forward:
+  train_years: 5
+  test_years: 1
+  method: "ic_weighted"     # ic_weighted | regression
+  purge_days: 21
+
+seed: 42

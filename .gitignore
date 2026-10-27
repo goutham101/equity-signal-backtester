@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.env
+.DS_Store
+.ipynb_checkpoints/
+
+# Raw downloads are cached locally, not committed.
+data/raw/
