@@ -106,8 +106,9 @@ def main() -> None:
     # 3. Write the IC sections of results.md (other sections are kept).
     note = (
         f"Spearman IC between the ranked signal at close t and the forward return "
-        f"from close t+{exec_lag} to close t+{exec_lag}+h. t-stat uses every h-th date "
-        f"only (non-overlapping). Dates with fewer than {min_stocks} stocks are skipped."
+        f"from close t+{exec_lag} to close t+{exec_lag}+h. t-stat is Newey-West "
+        f"with h lags (corrects for overlapping forward returns). "
+        f"Dates with fewer than {min_stocks} stocks are skipped."
     )
     quintile_note = (
         f"Average {CHART_HORIZON}-day forward return per signal quintile "

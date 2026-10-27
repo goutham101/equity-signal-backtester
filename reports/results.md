@@ -4,25 +4,26 @@ Auto-generated. Do not edit by hand.
 
 ## Signal IC
 
-Spearman IC between the ranked signal at close t and the forward return from close t+1 to close t+1+h. t-stat uses every h-th date only (non-overlapping). Dates with fewer than 50 stocks are skipped.
+Spearman IC between the ranked signal at close t and the forward return from close t+1 to close t+1+h. t-stat is Newey-West with h lags (corrects for overlapping forward returns). Dates with fewer than 50 stocks are skipped.
 
-| name | mean_ic | ic_std | ic_ir | pct_positive | t_stat | n_dates | n_non_overlap |
-|---|---|---|---|---|---|---|---|
-| equal_weight h=5 | 0.0096 | 0.2030 | 0.0471 | 0.5374 | 1.9715 | 3971 | 795 |
-| equal_weight h=21 | -0.0011 | 0.1923 | -0.0059 | 0.5252 | 0.2096 | 3955 | 189 |
-| equal_weight h=63 | -0.0169 | 0.1841 | -0.0916 | 0.4787 | -1.3327 | 3913 | 63 |
-| low_vol h=5 | -0.0126 | 0.2491 | -0.0506 | 0.4691 | -1.5013 | 4163 | 833 |
-| low_vol h=21 | -0.0286 | 0.2363 | -0.1209 | 0.4589 | -1.6475 | 4147 | 198 |
-| low_vol h=63 | -0.0549 | 0.2379 | -0.2306 | 0.4037 | -1.9253 | 4105 | 66 |
-| momentum h=5 | 0.0147 | 0.2179 | 0.0675 | 0.5424 | 2.1522 | 3971 | 795 |
-| momentum h=21 | 0.0104 | 0.1953 | 0.0531 | 0.5532 | 0.9325 | 3955 | 189 |
-| momentum h=63 | 0.0051 | 0.1771 | 0.0288 | 0.5229 | 0.0873 | 3913 | 63 |
-| random h=5 | 0.0000 | 0.0464 | 0.0007 | 0.4966 | -1.7655 | 4223 | 845 |
-| random h=21 | 0.0001 | 0.0462 | 0.0030 | 0.4977 | 2.2791 | 4207 | 201 |
-| random h=63 | -0.0003 | 0.0456 | -0.0058 | 0.4936 | 1.9612 | 4165 | 67 |
-| reversal h=5 | 0.0135 | 0.1684 | 0.0801 | 0.5242 | 2.0681 | 4218 | 844 |
-| reversal h=21 | 0.0102 | 0.1539 | 0.0665 | 0.5278 | 0.3243 | 4202 | 201 |
-| reversal h=63 | 0.0097 | 0.1466 | 0.0662 | 0.5149 | 0.4639 | 4160 | 67 |
+| name | mean_ic | ic_std | ic_ir | pct_positive | t_stat | n_dates |
+|---|---|---|---|---|---|---|
+| equal_weight h=5 | 0.0096 | 0.2030 | 0.0471 | 0.5374 | 1.6006 | 3971 |
+| equal_weight h=21 | -0.0011 | 0.1923 | -0.0059 | 0.5252 | -0.1065 | 3955 |
+| equal_weight h=63 | -0.0169 | 0.1841 | -0.0916 | 0.4787 | -0.9859 | 3913 |
+| low_vol h=5 | -0.0126 | 0.2491 | -0.0506 | 0.4691 | -1.7454 | 4163 |
+| low_vol h=21 | -0.0286 | 0.2363 | -0.1209 | 0.4589 | -2.0709 | 4147 |
+| low_vol h=63 | -0.0549 | 0.2379 | -0.2306 | 0.4037 | -2.3504 | 4105 |
+| momentum h=5 | 0.0147 | 0.2179 | 0.0675 | 0.5424 | 2.3066 | 3971 |
+| momentum h=21 | 0.0104 | 0.1953 | 0.0531 | 0.5532 | 0.9390 | 3955 |
+| momentum h=63 | 0.0051 | 0.1771 | 0.0288 | 0.5229 | 0.2993 | 3913 |
+| random h=5 | 0.0000 | 0.0464 | 0.0007 | 0.4966 | 0.0477 | 4223 |
+| random h=21 | 0.0001 | 0.0462 | 0.0030 | 0.4977 | 0.1942 | 4207 |
+| random h=63 | -0.0003 | 0.0456 | -0.0058 | 0.4936 | -0.3947 | 4165 |
+| reversal h=5 | 0.0135 | 0.1684 | 0.0801 | 0.5242 | 3.1842 | 4218 |
+| reversal h=21 | 0.0102 | 0.1539 | 0.0665 | 0.5278 | 2.1280 | 4202 |
+| reversal h=63 | 0.0097 | 0.1466 | 0.0662 | 0.5149 | 2.0092 | 4160 |
+
 
 ## Quintile forward returns (21d)
 
@@ -35,6 +36,7 @@ Average 21-day forward return per signal quintile (Q1 = lowest signal), averaged
 | low_vol | 0.0230 | 0.0144 | 0.0134 | 0.0117 | 0.0107 | -0.0124 |
 | random | 0.0150 | 0.0151 | 0.0150 | 0.0150 | 0.0149 | -0.0001 |
 | equal_weight | 0.0169 | 0.0151 | 0.0133 | 0.0136 | 0.0135 | -0.0034 |
+
 
 ## Backtest: long-short (monthly)
 
@@ -134,7 +136,6 @@ Out-of-sample only: 2015-01-02 to 2026-10-26, 12 test years. Every row covers th
 | random | -0.0107 | -0.0491 | 0.0424 | -0.2591 | -1.1602 | -0.4637 | -0.1060 | 38.4687 | 0.0385 | 0.4776 | -0.0376 | 0.0000 | 0.1634 | -0.1741 |
 | equal_weight | -0.0633 | -0.0892 | 0.1643 | -0.3862 | -0.5428 | -0.7560 | -0.1179 | 25.8389 | 0.0258 | 0.5153 | -0.1232 | 0.0000 | 0.1520 | -0.2153 |
 
-
 ## Walk-forward fitted weights
 
 Weight per signal for each test year, fit on that window's training data only.
@@ -153,4 +154,3 @@ Weight per signal for each test year, fit on that window's training data only.
 | 2024 | 0.0000 | 1.0000 | 0.0000 |
 | 2025 | 0.6580 | 0.3420 | 0.0000 |
 | 2026 | 0.6631 | 0.3369 | 0.0000 |
-

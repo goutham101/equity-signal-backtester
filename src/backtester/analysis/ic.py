@@ -29,14 +29,45 @@ def daily_ic(signal: pd.DataFrame, fwd_ret: pd.DataFrame, min_stocks: int = 50) 
     return ic[enough_stocks]
 
 
+def newey_west_tstat(series: pd.Series, lags: int) -> float:
+    """t-stat of the mean of `series`, with a Newey-West standard error.
+
+    A plain t-stat assumes each observation is independent. Daily ICs are
+    not: the forward returns on consecutive dates overlap, so neighbouring
+    ICs share most of their days. Newey-West adds the autocovariances up to
+    `lags` to the variance, each weighted by 1 - k / (lags + 1) (Bartlett
+    weights, which keep the variance positive). With lags=0 it is the plain
+    t-stat (using the population variance).
+    """
+    x = series.dropna().to_numpy(dtype=float)
+    n = len(x)
+    if n < 2:
+        return np.nan
+
+    demeaned = x - x.mean()
+    variance = np.dot(demeaned, demeaned) / n
+    for k in range(1, min(lags, n - 1) + 1):
+        weight = 1 - k / (lags + 1)
+        autocov = np.dot(demeaned[k:], demeaned[:-k]) / n
+        variance += 2 * weight * autocov
+
+    if variance <= 0:
+        return np.nan
+    standard_error = np.sqrt(variance / n)
+    return x.mean() / standard_error
+
+
 def ic_summary(ic: pd.Series, horizon: int) -> dict:
     """Summary stats for a daily IC series.
 
-    The t-stat uses only every horizon-th date. Forward returns for
-    consecutive dates overlap by horizon-1 days, so daily ICs are strongly
-    correlated and a t-stat on every day would be inflated. Sampling every
-    horizon-th date gives (roughly) independent observations.
-    t = mean / std * sqrt(n) on that sample.
+    The t-stat is Newey-West with `horizon` lags, on every date. Forward
+    returns h days long overlap by h-1 days on neighbouring dates, so the
+    daily ICs are correlated up to about h-1 days apart; using h lags is
+    slightly conservative.
+
+    Why not sample every h-th date (the first version)? That t-stat changed a
+    lot with the starting date: on the random baseline it ranged from about
+    -1.8 to +2.9 depending on the offset. Newey-West uses all dates.
     """
     ic = ic.dropna()
 
@@ -47,13 +78,7 @@ def ic_summary(ic: pd.Series, horizon: int) -> dict:
     else:
         ic_ir = np.nan
 
-    non_overlap = ic.iloc[::horizon]
-    n_non_overlap = len(non_overlap)
-    std_non_overlap = non_overlap.std()
-    if n_non_overlap >= 2 and std_non_overlap > 0:
-        t_stat = non_overlap.mean() / std_non_overlap * np.sqrt(n_non_overlap)
-    else:
-        t_stat = np.nan
+    t_stat = newey_west_tstat(ic, lags=horizon)
 
     if len(ic) > 0:
         pct_positive = (ic > 0).mean()
@@ -67,7 +92,6 @@ def ic_summary(ic: pd.Series, horizon: int) -> dict:
         "pct_positive": pct_positive,
         "t_stat": t_stat,
         "n_dates": len(ic),
-        "n_non_overlap": n_non_overlap,
     }
 
 

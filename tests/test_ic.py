@@ -9,6 +9,7 @@ from backtester.analysis.ic import (
     daily_ic,
     ic_summary,
     ic_table,
+    newey_west_tstat,
     quintile_returns,
     rolling_ic,
 )
@@ -52,18 +53,40 @@ def test_min_stocks_filter(fwd_5d):
     assert thin_date in ic_loose.index
 
 
-def test_t_stat_uses_non_overlapping_dates():
+def test_newey_west_zero_lags_is_plain_tstat():
+    rng = np.random.default_rng(0)
+    x = pd.Series(rng.normal(0.03, 0.1, size=200))
+    plain = x.mean() / (x.std(ddof=0) / np.sqrt(len(x)))
+    assert newey_west_tstat(x, lags=0) == pytest.approx(plain)
+
+
+def test_newey_west_shrinks_t_for_overlapping_data():
+    """Overlapping sums are autocorrelated, so the plain t-stat is too big."""
+    rng = np.random.default_rng(1)
+    shocks = pd.Series(rng.normal(0.02, 1.0, size=3000))
+    overlapping = shocks.rolling(21).sum().dropna()
+    plain = newey_west_tstat(overlapping, lags=0)
+    corrected = newey_west_tstat(overlapping, lags=21)
+    assert abs(corrected) < abs(plain) / 2
+
+
+def test_newey_west_random_ic_is_near_zero():
+    """Pure-noise ICs give a t-stat inside the usual range most of the time."""
+    hits = 0
+    for seed in range(200):
+        noise = pd.Series(np.random.default_rng(seed).normal(0, 0.05, size=1000))
+        if abs(newey_west_tstat(noise, lags=21)) < 1.96:
+            hits += 1
+    assert hits >= 180  # about 95% expected
+
+
+def test_ic_summary_uses_newey_west():
     rng = np.random.default_rng(0)
     dates = pd.bdate_range("2020-01-01", periods=100)
     ic = pd.Series(rng.normal(0.03, 0.1, size=100), index=dates)
-
     stats = ic_summary(ic, horizon=21)
-
-    sample = ic.iloc[[0, 21, 42, 63, 84]]
-    expected_t = sample.mean() / sample.std() * np.sqrt(5)
-    assert stats["n_non_overlap"] == 5
     assert stats["n_dates"] == 100
-    assert stats["t_stat"] == pytest.approx(expected_t)
+    assert stats["t_stat"] == pytest.approx(newey_west_tstat(ic, lags=21))
 
 
 def test_ic_summary_basic_stats():
@@ -73,7 +96,6 @@ def test_ic_summary_basic_stats():
     assert stats["ic_std"] == pytest.approx(ic.std())
     assert stats["ic_ir"] == pytest.approx(0.05 / ic.std())
     assert stats["pct_positive"] == pytest.approx(0.5)
-    assert stats["n_non_overlap"] == 4
 
 
 def test_rolling_ic_is_trailing_mean():
