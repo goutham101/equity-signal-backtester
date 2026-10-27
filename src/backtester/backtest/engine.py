@@ -34,6 +34,21 @@ def _align_weights(target_weights: pd.DataFrame, returns: pd.DataFrame) -> pd.Da
     return aligned
 
 
+def _leg_returns(held: pd.DataFrame, returns: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
+    """Split the daily gross return into the long leg and the short leg.
+
+    held: weights held during day d (already shifted by 1 + exec_lag).
+    returns: close d-1 -> close d returns, NaN already filled with 0.
+    The long leg uses only positive held weights, the short leg only negative
+    ones. A short leg that makes money (stocks fell) shows a positive value.
+    """
+    long_weights = held.clip(lower=0.0)
+    short_weights = held.clip(upper=0.0)
+    gross_long = (long_weights * returns).sum(axis=1)
+    gross_short = (short_weights * returns).sum(axis=1)
+    return gross_long, gross_short
+
+
 def run_backtest(
     target_weights: pd.DataFrame,
     returns: pd.DataFrame,
@@ -50,6 +65,10 @@ def run_backtest(
     is the total absolute change in held weights from day d-1 to day d.
     exec_lag=0 (trade at the signal's own close) is optimistic; use it only
     as a comparison.
+
+    Extra columns gross_long and gross_short split gross by leg (positive vs
+    negative held weights), so gross_long + gross_short == gross up to float
+    rounding. Costs are not split by leg.
     """
     if exec_lag < 0:
         raise ValueError("exec_lag must be >= 0")
@@ -58,13 +77,24 @@ def run_backtest(
     weights = _align_weights(target_weights.sort_index(), returns)
 
     held = weights.shift(1 + exec_lag).fillna(0.0)
-    gross = (held * returns.fillna(0.0)).sum(axis=1)
+    clean_returns = returns.fillna(0.0)
+    gross = (held * clean_returns).sum(axis=1)
+    gross_long, gross_short = _leg_returns(held, clean_returns)
 
     turnover = held.diff().abs().sum(axis=1).fillna(0.0)
     costs = turnover * cost_bps / 10_000
     net = gross - costs
 
-    return pd.DataFrame({"gross": gross, "costs": costs, "net": net, "turnover": turnover})
+    return pd.DataFrame(
+        {
+            "gross": gross,
+            "costs": costs,
+            "net": net,
+            "turnover": turnover,
+            "gross_long": gross_long,
+            "gross_short": gross_short,
+        }
+    )
 
 
 def cost_sensitivity(

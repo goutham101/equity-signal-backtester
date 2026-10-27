@@ -41,6 +41,56 @@ def sharpe_ratio(returns: pd.Series) -> float:
     return annual_return(returns) / vol
 
 
+def rolling_sharpe(returns: pd.Series, window: int = TRADING_DAYS) -> pd.Series:
+    """Annualized Sharpe over a trailing window of daily returns.
+
+    The value on day d uses only the `window` returns ending at close d
+    (backward-looking, no future data). The first window - 1 days are NaN.
+    Days where the window's volatility is (near) zero are NaN, same rule as
+    sharpe_ratio.
+    """
+    rolling_mean = returns.rolling(window).mean()
+    rolling_std = returns.rolling(window).std()
+
+    ann_return = rolling_mean * TRADING_DAYS
+    ann_vol = rolling_std * np.sqrt(TRADING_DAYS)
+
+    ratio = ann_return / ann_vol
+    ratio = ratio.where(ann_vol >= ZERO_STD_TOL)
+    return ratio
+
+
+def net_returns_at_cost(results: pd.DataFrame, cost_bps: float) -> pd.Series:
+    """Daily net returns at a different cost level, without rerunning the backtest.
+
+    results: backtest engine output (needs gross and turnover). Row d is the
+    return from close d-1 to close d. Uses the same formula as the engine:
+    net = gross - turnover * cost_bps / 10,000.
+    """
+    costs = results["turnover"] * cost_bps / 10_000
+    return results["gross"] - costs
+
+
+def breakeven_cost_bps(results: pd.DataFrame) -> float:
+    """Cost in bps at which mean net return, and so net Sharpe, is zero.
+
+    mean(net) = mean(gross) - mean(turnover) * bps / 10,000 = 0
+    so bps = mean(gross) / mean(turnover) * 10,000.
+
+    Returns NaN if the strategy never trades (costs can never matter).
+    Returns 0.0 if mean gross is zero or negative: it already loses money
+    before costs, so no cost level breaks even.
+    """
+    mean_turnover = results["turnover"].mean()
+    if not np.isfinite(mean_turnover) or mean_turnover == 0:
+        return np.nan
+
+    mean_gross = results["gross"].mean()
+    if mean_gross <= 0:
+        return 0.0
+    return mean_gross / mean_turnover * 10_000
+
+
 def equity_curve(returns: pd.Series, start: float = 1.0) -> pd.Series:
     """Compounded equity at each close: start * cumprod(1 + daily return)."""
     return start * (1 + returns.fillna(0.0)).cumprod()
@@ -99,16 +149,38 @@ def worst_month(returns: pd.Series) -> float:
     return monthly_returns(returns).min()
 
 
+def trim_to_active(results: pd.DataFrame) -> pd.DataFrame:
+    """Drop the warm-up rows before the portfolio first holds a position.
+
+    Before the first trade, every row is a zero return with zero turnover
+    (e.g. momentum's 252-day warm-up, or the first 5 years of walk-forward).
+    Counting those days would pull annual return and Sharpe toward zero.
+    The first row with turnover > 0 is the first day held weights are nonzero
+    (held already includes the 1 + exec_lag shift), so it is kept.
+    Returns an empty frame if the portfolio never trades.
+    """
+    traded = results["turnover"] > 0
+    if not traded.any():
+        return results.iloc[0:0]
+    first_day = traded.idxmax()
+    return results.loc[first_day:]
+
+
 def summary(results: pd.DataFrame) -> dict:
     """Headline metrics for one backtest.
 
     results: backtest engine output with columns gross, costs, net, turnover,
     indexed by date (row d = return from close d-1 to close d).
     Return/risk metrics use net returns unless the key says gross.
+    Warm-up rows before the first trade are dropped first (trim_to_active).
+    breakeven_bps is the cost level where net Sharpe would be zero.
+    If the optional gross_long / gross_short columns exist, their annual
+    returns (before costs) are added as ann_return_long / ann_return_short.
     """
+    results = trim_to_active(results)
     gross = results["gross"]
     net = results["net"]
-    return {
+    out = {
         "ann_return_gross": annual_return(gross),
         "ann_return_net": annual_return(net),
         "ann_vol_net": annual_volatility(net),
@@ -120,7 +192,15 @@ def summary(results: pd.DataFrame) -> dict:
         "ann_cost": annual_return(results["costs"]),
         "hit_rate_net": hit_rate(net),
         "worst_month_net": worst_month(net),
+        "breakeven_bps": breakeven_cost_bps(results),
     }
+
+    # Leg breakdown only exists for newer engine output.
+    if "gross_long" in results.columns:
+        out["ann_return_long"] = annual_return(results["gross_long"])
+    if "gross_short" in results.columns:
+        out["ann_return_short"] = annual_return(results["gross_short"])
+    return out
 
 
 def _format_cell(value) -> str:

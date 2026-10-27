@@ -10,3 +10,7 @@ __pycache__/
 
 # Raw downloads are cached locally, not committed.
 data/raw/
+
+# Generated data: processed signals, backtest frames, smoke-test outputs.
+data/processed/
+data/smoke/

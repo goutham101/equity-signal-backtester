@@ -82,7 +82,9 @@ def test_net_equals_gross_minus_costs(synthetic_prices):
     pd.testing.assert_series_equal(
         result["net"], result["gross"] - result["costs"], check_names=False
     )
-    assert list(result.columns) == ["gross", "costs", "net", "turnover"]
+    assert list(result.columns) == [
+        "gross", "costs", "net", "turnover", "gross_long", "gross_short"
+    ]
 
 
 def test_alignment_reorders_columns_and_fills_missing_tickers():
@@ -151,3 +153,42 @@ def test_backtest_does_not_use_future_returns(synthetic_prices):
     recomputed = run_backtest(weights, corrupted_returns)
 
     pd.testing.assert_frame_equal(original.loc[:cutoff], recomputed.loc[:cutoff])
+
+
+def test_legs_sum_to_gross(synthetic_prices):
+    returns = synthetic_prices.pct_change()
+    signal = synthetic_prices.shift(21) / synthetic_prices.shift(252) - 1
+    weights = build_target_weights(signal, freq="monthly", kind="long_short")
+    result = run_backtest(weights, returns, cost_bps=10.0)
+
+    legs = result["gross_long"] + result["gross_short"]
+    pd.testing.assert_series_equal(legs, result["gross"], check_names=False, rtol=0, atol=1e-15)
+    # Both legs really trade in a long-short book.
+    assert (result["gross_long"] != 0).any()
+    assert (result["gross_short"] != 0).any()
+
+
+def test_long_only_has_no_short_leg(synthetic_prices):
+    returns = synthetic_prices.pct_change()
+    signal = synthetic_prices.shift(21) / synthetic_prices.shift(252) - 1
+    weights = build_target_weights(signal, freq="monthly", kind="long_only")
+    result = run_backtest(weights, returns, cost_bps=10.0)
+
+    assert (result["gross_short"] == 0.0).all()
+    pd.testing.assert_series_equal(result["gross_long"], result["gross"], check_names=False)
+
+
+def test_only_short_leg_makes_money():
+    # Long A, short B. A goes nowhere, B falls 2% every day, so all profit
+    # comes from the short leg.
+    dates = pd.bdate_range("2024-01-01", periods=6)
+    weights = pd.DataFrame({"A": 1.0, "B": -1.0}, index=dates)
+    returns = pd.DataFrame({"A": 0.0, "B": -0.02}, index=dates)
+
+    result = run_backtest(weights, returns, cost_bps=0.0, exec_lag=1)
+
+    # Held from day 2 (decision at close 0, trade at close 1).
+    assert (result["gross_long"] == 0.0).all()
+    assert result["gross_short"].iloc[:2].tolist() == [0.0, 0.0]
+    assert result["gross_short"].iloc[2:].tolist() == pytest.approx([0.02] * 4)
+    pd.testing.assert_series_equal(result["gross_short"], result["gross"], check_names=False)
