@@ -116,6 +116,9 @@ docker compose up -d                              # Postgres 16 on localhost:543
 .venv/bin/python scripts/03_ic_analysis.py
 .venv/bin/python scripts/04_backtest.py
 .venv/bin/python scripts/05_walk_forward.py       # results in reports/
+.venv/bin/python scripts/06_export_dashboard_data.py
+
+.venv/bin/streamlit run dashboard/app.py          # dashboard on localhost:8501
 
 .venv/bin/pytest                                  # no internet needed; DB test skips without Postgres
 ```
@@ -141,12 +144,13 @@ All parameters live in `config.yaml`. `end_date` is pinned to 2026-10-26 so the 
 │   ├── backtest/               # portfolios, engine, walk-forward
 │   ├── reporting/plots.py
 │   └── pipeline.py             # shared setup for the scripts
-├── scripts/01_…05_*.py         # run the pipeline in order
+├── scripts/01_…06_*.py         # run the pipeline in order (06 exports dashboard data)
+├── dashboard/                  # Streamlit app; reads only dashboard/data/
 ├── tests/                      # pytest, synthetic data
 ├── reports/
 │   ├── results.md              # generated tables
 │   └── figures/
-└── docs/dashboard_spec.md      # planned Streamlit dashboard
+└── docs/                       # dashboard spec + data contract
 ```
 
 Educational project. Not investment advice.

@@ -19,22 +19,15 @@ Usage:
 
 import argparse
 
-import pandas as pd
-
 from backtester import pipeline
-from backtester.analysis.forward_returns import daily_returns
-from backtester.analysis.metrics import summary
-from backtester.backtest.engine import run_backtest
-from backtester.backtest.portfolio import build_target_weights
-from backtester.backtest.walk_forward import walk_forward_signal
+from backtester.backtest.walk_forward import windows_table
 from backtester.config import load_config
 from backtester.data import db
 from backtester.reporting import plots
 
-# Fit on 21-day forward returns, the same horizon as the monthly rebalance.
-FIT_HORIZON = 21
-FREQ = "monthly"
-KIND = "long_short"
+FIT_HORIZON = pipeline.OOS_FIT_HORIZON
+FREQ = pipeline.OOS_FREQ
+KIND = pipeline.OOS_KIND
 
 
 def parse_args() -> argparse.Namespace:
@@ -42,27 +35,6 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     pipeline.add_smoke_flag(parser)
     return parser.parse_args()
-
-
-def oos_dates(windows: list[dict], index: pd.DatetimeIndex) -> pd.Series:
-    """True on dates inside any test window, False everywhere else."""
-    in_test = pd.Series(False, index=index)
-    for w in windows:
-        in_test.loc[w["test_start"]:w["test_end"]] = True
-    return in_test
-
-
-def cut_to_oos(signal: pd.DataFrame, in_test: pd.Series) -> pd.DataFrame:
-    """Blank a signal outside the test windows so it covers the OOS period only."""
-    cut = signal.copy()
-    cut.loc[~in_test.reindex(cut.index, fill_value=False), :] = float("nan")
-    return cut
-
-
-def windows_table(windows: list[dict]) -> pd.DataFrame:
-    """Windows as a DataFrame, one row per test year."""
-    table = pd.DataFrame(windows).set_index("label")
-    return table[["train_start", "train_end", "test_start", "test_end"]]
 
 
 def main() -> None:
@@ -74,48 +46,22 @@ def main() -> None:
 
     wf = cfg["walk_forward"]
     bt = cfg["backtest"]
-    min_stocks = cfg["signals"]["min_stocks"]
 
     engine = db.get_engine()
     prices = pipeline.load_prices(engine, cfg)
     signals = pipeline.load_signals(paths["signals"], cfg)
-    returns = daily_returns(prices)
 
-    ranked = {name: signals[name] for name in pipeline.COMBO_INPUTS}
-    combined, weights, windows = walk_forward_signal(
-        ranked,
-        prices,
-        horizon=FIT_HORIZON,
-        exec_lag=bt["exec_lag"],
-        train_years=wf["train_years"],
-        test_years=wf["test_years"],
-        purge_days=wf["purge_days"],
-        min_stocks=min_stocks,
-        method=wf["method"],
-    )
-    if not windows:
-        raise SystemExit("No walk-forward windows: not enough history for one train period.")
+    # Fit, cut every signal to the test dates, backtest (shared with script 06).
+    oos = pipeline.run_oos_comparison(signals, prices, cfg)
+    frames = oos["frames"]
+    rows = oos["stats"]
+    weights = oos["weights"]
+    windows = oos["windows"]
 
     print(f"\n{len(windows)} windows, method={wf['method']}, horizon={FIT_HORIZON}d")
     print(windows_table(windows).to_string())
     print("\nFitted weights per window:")
     print(weights.round(3).to_string())
-
-    in_test = oos_dates(windows, prices.index)
-    candidates = {"walk_forward": combined}
-    for name in pipeline.SIGNAL_NAMES:
-        candidates[name] = cut_to_oos(signals[name], in_test)
-
-    rows = {}
-    frames = {}
-    for name, signal in candidates.items():
-        target = build_target_weights(signal, FREQ, KIND, bt["quantiles"])
-        pipeline.check_weight_sums(target, KIND, f"OOS {name}")
-        results = run_backtest(target, returns, cost_bps=bt["cost_bps"], exec_lag=bt["exec_lag"])
-        stats = summary(results)
-        pipeline.check_backtest_red_flags(f"OOS {name}", stats, results)
-        rows[name] = stats
-        frames[name] = results
 
     # Save for the dashboard export (Phase 7).
     paths["backtests"].mkdir(parents=True, exist_ok=True)

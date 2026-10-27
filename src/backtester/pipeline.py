@@ -18,7 +18,11 @@ import numpy as np
 import pandas as pd
 import sqlalchemy as sa
 
-from backtester.analysis.metrics import results_to_markdown, write_results_md
+from backtester.analysis.forward_returns import daily_returns
+from backtester.analysis.metrics import results_to_markdown, summary, write_results_md
+from backtester.backtest.engine import run_backtest
+from backtester.backtest.portfolio import build_target_weights
+from backtester.backtest.walk_forward import cut_to_oos, oos_dates, walk_forward_signal
 from backtester.config import ROOT
 from backtester.data import db
 from backtester.signals import (
@@ -44,6 +48,12 @@ MAX_PLAUSIBLE_SHARPE = 2.0
 WEIGHT_SUM_TOL = 1e-9
 
 SIGNALS_CONFIG_FILE = "signals_config.json"
+
+# Walk-forward out-of-sample comparison (scripts 05 and 06).
+# Fit on 21-day forward returns, the same horizon as the monthly rebalance.
+OOS_FIT_HORIZON = 21
+OOS_FREQ = "monthly"
+OOS_KIND = "long_short"
 
 
 # ---------- command line, config and folders ----------
@@ -221,6 +231,65 @@ def load_signals(folder: Path, cfg: dict) -> dict[str, pd.DataFrame]:
     for name in SIGNAL_NAMES:
         signals[name] = pd.read_parquet(folder / f"{name}.parquet")
     return signals
+
+
+# ---------- walk-forward out-of-sample comparison ----------
+
+
+def run_oos_comparison(
+    signals: dict[str, pd.DataFrame],
+    prices: pd.DataFrame,
+    cfg: dict,
+) -> dict:
+    """Walk-forward combo vs every other signal, on the same out-of-sample dates.
+
+    1. Fit walk-forward weights on the COMBO_INPUTS (walk_forward_signal),
+       giving one combined signal that is NaN outside the test years.
+    2. Cut every signal in SIGNAL_NAMES to the same test dates.
+    3. Backtest each one long-short, monthly, with the config costs and exec_lag.
+
+    Deterministic, and never logs to backtest_runs (the caller decides that).
+    Returns a dict with:
+    - frames: {name: run_backtest output}, walk_forward first
+    - stats: {name: metrics.summary of that frame}
+    - weights: fitted weights, one row per test year
+    - windows: the window dicts from make_windows
+    """
+    wf = cfg["walk_forward"]
+    bt = cfg["backtest"]
+
+    ranked = {name: signals[name] for name in COMBO_INPUTS}
+    combined, weights, windows = walk_forward_signal(
+        ranked,
+        prices,
+        horizon=OOS_FIT_HORIZON,
+        exec_lag=bt["exec_lag"],
+        train_years=wf["train_years"],
+        test_years=wf["test_years"],
+        purge_days=wf["purge_days"],
+        min_stocks=cfg["signals"]["min_stocks"],
+        method=wf["method"],
+    )
+    if not windows:
+        raise ValueError("No walk-forward windows: not enough history for one train period.")
+
+    in_test = oos_dates(windows, prices.index)
+    candidates = {"walk_forward": combined}
+    for name in SIGNAL_NAMES:
+        candidates[name] = cut_to_oos(signals[name], in_test)
+
+    returns = daily_returns(prices)
+    frames = {}
+    stats = {}
+    for name, signal in candidates.items():
+        target = build_target_weights(signal, OOS_FREQ, OOS_KIND, bt["quantiles"])
+        check_weight_sums(target, OOS_KIND, f"OOS {name}")
+        results = run_backtest(target, returns, cost_bps=bt["cost_bps"], exec_lag=bt["exec_lag"])
+        stats[name] = summary(results)
+        check_backtest_red_flags(f"OOS {name}", stats[name], results)
+        frames[name] = results
+
+    return {"frames": frames, "stats": stats, "weights": weights, "windows": windows}
 
 
 # ---------- results.md ----------

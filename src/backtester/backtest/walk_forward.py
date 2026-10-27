@@ -303,3 +303,28 @@ def walk_forward_signal(
     weights_table = weights_table.reindex(columns=list(ranked.keys()))
     weights_table.index.name = "window"
     return combined, weights_table, windows
+
+
+def oos_dates(windows: list[dict], index: pd.DatetimeIndex) -> pd.Series:
+    """True on dates inside any test window, False everywhere else."""
+    in_test = pd.Series(False, index=index)
+    for w in windows:
+        in_test.loc[w["test_start"]:w["test_end"]] = True
+    return in_test
+
+
+def cut_to_oos(signal: pd.DataFrame, in_test: pd.Series) -> pd.DataFrame:
+    """Blank a signal outside the test windows so it covers the OOS period only.
+
+    Only whole rows are blanked, so each kept row still uses only data up to
+    its own close t.
+    """
+    cut = signal.copy()
+    cut.loc[~in_test.reindex(cut.index, fill_value=False), :] = float("nan")
+    return cut
+
+
+def windows_table(windows: list[dict]) -> pd.DataFrame:
+    """Windows as a DataFrame, one row per test year (index = label)."""
+    table = pd.DataFrame(windows).set_index("label")
+    return table[["train_start", "train_end", "test_start", "test_end"]]

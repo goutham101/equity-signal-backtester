@@ -1,0 +1,42 @@
+{
+  "universe": "Current S&P 500 constituents",
+  "n_stocks": 498,
+  "start_date": "2010-01-04",
+  "end_date": "2026-10-26",
+  "oos_start": "2015-01-02",
+  "oos_end": "2026-10-26",
+  "last_updated": "2026-10-27T13:58:09+00:00",
+  "variations_tried": 21,
+  "default_cost_bps": 10,
+  "exec_lag": 1,
+  "quantiles": 5,
+  "walk_forward_method": "ic_weighted",
+  "lookahead_test": {
+    "status": "passing",
+    "checked_at": "2026-10-27T13:58:09+00:00",
+    "tests": 22
+  },
+  "key_findings": [
+    "**Reversal is real, but you can't trade it.** Its IC is positive at every horizon, with Newey-West t-stats of 3.18 (5 days), 2.13 (21 days), and 2.01 (63 days). Rebalanced weekly it has a gross Sharpe of 0.32. Net of 10 bps it's -0.74. It trades about 161\u00d7 its capital a year and breaks even at 3 bps. Real-world costs for most traders are higher than that.",
+    "**Momentum is the only signal that survives costs, barely.** Net Sharpe 0.06 long-short, breakeven around 20 bps. Long-only did better: 20.6% a year net, Sharpe 1.00, about 2.6% a year over an equal-weight benchmark of the same stocks.",
+    "**Low volatility lost 14.6% a year gross as a long-short.** That isn't a broken signal. Long calm stocks, short wild ones is dollar-neutral but not beta-neutral, so the portfolio was effectively short the market during a 16-year bull run. Survivorship bias probably made it worse (see Limitations). Long-only low-vol still made 12.8% a year, just less than the 18.0% benchmark.",
+    "**Fitting weights didn't beat plain momentum.** Out of sample (2015\u20132026), the walk-forward combo had net Sharpe -0.20. That beat the equal-weight combo (-0.54) and lost to momentum alone (0.04 over the same dates). The fit gave low-vol zero weight in every window and put 100% on reversal from 2019 to 2024.",
+    "**The random baseline behaves.** IC \u2248 0 and t-stats of 0.05, 0.19, and -0.39. Its gross Sharpe of -0.35 is within normal noise for 16 years of data (the standard error of a Sharpe over 16 years is about 0.25). After costs it's -1.29, which is a good picture of what costs do to a strategy with no edge."
+  ],
+  "limitations": [
+    "**Survivorship bias.** The universe is *today's* S&P 500. Companies that went bust or got dropped are missing, and stocks that got added *after* big run-ups are included for their whole history. This inflates long returns and probably hurts low-vol, since volatile winners are over-represented.",
+    "**Not beta- or sector-neutral.** Long-short books are dollar-neutral only. Low-vol in particular ends up short the market.",
+    "**Simple costs.** A flat cost per unit traded. No market impact, no bid-ask that varies by stock or over time.",
+    "**No borrow costs** on the short side.",
+    "**No weight drift.** Weights stay at their targets between rebalances instead of drifting with prices.",
+    "**No risk-free rate** in the Sharpe ratio.",
+    "**Yahoo data quality.** I inspected every daily move over 50% by hand. One was wrong: DHR's adjusted price jumps 61% on the Fortive spin-off day (2016-07-05), when the stock actually fell. I blanked DHR's history before that date. MRNA's +177% day on 2026-08-19 had about 45\u00d7 normal volume, so I kept it, but I couldn't confirm it independently.",
+    "**Partial last year.** The final walk-forward test year is 2026-01-02 to 2026-10-26.",
+    "**How many variations I tried.** 5 signals \u00d7 2 portfolio types \u00d7 2 rebalance frequencies, plus the walk-forward combo: 21 runs, all logged in the `backtest_runs` table with their full config. Every lookback, the quintile count, and the cost level were fixed in `config.yaml` before I saw any results. Nothing was tuned. I changed one method after seeing results: the IC t-stat. Sampling every *h*-th date gave the random baseline t-stats anywhere from -1.8 to +2.9 depending on the start date, so I switched to Newey-West."
+  ],
+  "links": {
+    "github": "https://github.com/goutham101/equity-signal-backtester",
+    "readme": "https://github.com/goutham101/equity-signal-backtester#readme",
+    "linkedin": null
+  }
+}
