@@ -1,6 +1,6 @@
 data:
   start_date: "2010-01-01"
-  end_date: null            # null = latest available
+  end_date: "2026-10-26"    # fixed for reproducible results (last full close at download)
   universe: "sp500_current"
   min_history_days: 504
   max_ffill_days: 5

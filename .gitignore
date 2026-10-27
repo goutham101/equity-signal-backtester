@@ -14,3 +14,4 @@ data/raw/
 # Generated data: processed signals, backtest frames, smoke-test outputs.
 data/processed/
 data/smoke/
+data/download_log.txt

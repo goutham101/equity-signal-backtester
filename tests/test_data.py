@@ -215,3 +215,19 @@ def test_sql_momentum_matches_pandas(engine, synthetic_prices):
         )
     finally:
         db.delete_tickers(engine, TEST_TICKERS)
+
+
+def test_blank_known_bad_history():
+    """Prices before the known-good date are blanked; later prices are kept."""
+    from backtester.data.clean import blank_known_bad_history
+
+    dates = pd.bdate_range("2016-06-29", periods=6)
+    prices = pd.DataFrame({"BAD": [40.0, 41.0, 42.0, 67.0, 68.0, 69.0], "OK": 1.0}, index=dates)
+    volume = prices * 0 + 100
+    known = {"BAD": (str(dates[3].date()), "test"), "MISSING": ("2016-01-01", "not in data")}
+    new_prices, new_volume, n_blanked = blank_known_bad_history(prices, volume, known)
+    assert n_blanked == 3
+    assert new_prices["BAD"].iloc[:3].isna().all()
+    assert new_prices["BAD"].iloc[3:].tolist() == [67.0, 68.0, 69.0]
+    assert new_prices["OK"].notna().all()
+    assert new_volume["BAD"].iloc[:3].isna().all()

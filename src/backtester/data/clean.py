@@ -8,6 +8,15 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
+# Tickers whose adjusted prices are wrong before a date, found by inspecting
+# flagged big moves by hand. Prices before the date are blanked, so the
+# ticker's history starts on that date. We don't try to invent the true return.
+KNOWN_BAD_HISTORY = {
+    # Fortive spin-off: Yahoo's adjustment turns the real drop into a fake
+    # +61% jump (41.94 -> 67.61) on 2016-07-05.
+    "DHR": ("2016-07-05", "bad Fortive spin-off adjustment in Yahoo data"),
+}
+
 
 @dataclass
 class CleanResult:
@@ -122,6 +131,26 @@ def liquidity_mask(
     return pct_rank > bottom_pct
 
 
+def blank_known_bad_history(
+    prices: pd.DataFrame, volume: pd.DataFrame, known: dict = KNOWN_BAD_HISTORY
+) -> tuple[pd.DataFrame, pd.DataFrame, int]:
+    """Blank prices and volume before each ticker's known-good start date.
+
+    Returns the new prices, new volume, and how many price cells were blanked.
+    """
+    prices = prices.copy()
+    volume = volume.copy()
+    n_blanked = 0
+    for ticker, (good_from, _reason) in known.items():
+        if ticker not in prices.columns:
+            continue
+        before = prices.index < pd.Timestamp(good_from)
+        n_blanked += int(prices.loc[before, ticker].notna().sum())
+        prices.loc[before, ticker] = float("nan")
+        volume.loc[before, ticker] = float("nan")
+    return prices, volume, n_blanked
+
+
 def clean_prices(
     prices: pd.DataFrame,
     volume: pd.DataFrame,
@@ -132,7 +161,7 @@ def clean_prices(
 ) -> CleanResult:
     """Run every check from spec 6.5 and return cleaned data plus a report.
 
-    Order: remove bad prices -> flag big moves and gaps on raw data ->
+    Order: remove bad prices -> blank known-bad history -> flag big moves and gaps on raw data ->
     drop short histories -> forward-fill (limited) -> count leftover gaps.
     Uses closes only up to each date (ffill only, never bfill).
     """
@@ -146,6 +175,10 @@ def clean_prices(
 
     prices, n_nonpositive = remove_nonpositive(prices)
     report["nonpositive_prices_removed"] = n_nonpositive
+
+    prices, volume, n_blanked = blank_known_bad_history(prices, volume)
+    report["known_bad_history_cells_blanked"] = n_blanked
+    report["known_bad_history_tickers"] = sorted(KNOWN_BAD_HISTORY)
 
     big_moves = flag_big_moves(prices, big_move_threshold)
     report["big_moves_flagged"] = len(big_moves)
